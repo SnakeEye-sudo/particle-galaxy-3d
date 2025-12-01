@@ -1,1 +1,246 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Particle Galaxy 3D</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0a0e27;color:#fff;overflow:hidden;height:100vh;font-family:Arial,sans-serif}canvas{display:block}#ui{position:fixed;top:20px;left:20px;background:rgba(10,14,39,.9);border:1px solid #00d4ff;padding:20px;border-radius:10px;font-size:13px;z-index:100}#ui h2{margin-bottom:15px;color:#00d4ff}input,button{width:100%;padding:8px;margin:5px 0;border:1px solid #00d4ff;background:rgba(0,212,255,.1);color:#fff;border-radius:5px}button{background:linear-gradient(135deg,#00d4ff,#7c3aed);border:none;cursor:pointer;font-weight:bold}button:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(0,212,255,.3)}#stats{position:fixed;top:20px;right:20px;background:rgba(10,14,39,.9);border:1px solid #7c3aed;padding:15px;border-radius:10px;font-size:12px;font-family:monospace;z-index:100}</style></head><body><div id="ui"><h2>Particle Galaxy</h2><label>Particles: <span id="pCount">3000</span></label><input type="range" id="particles" min="500" max="10000" value="3000" step="500"><label>Gravity: <span id="gVal">0.5</span></label><input type="range" id="gravity" min="0" max="2" value="0.5" step="0.1"><button id="reset">Reset</button></div><div id="stats"><div>FPS: <span id="fps">0</span></div><div>Particles: <span id="pDisplay">0</span></div></div><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script>const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,.1,10000),renderer=new THREE.WebGLRenderer({antialias:!0,alpha:!0});renderer.setSize(window.innerWidth,window.innerHeight),renderer.setClearColor(0x0a0e27),document.body.appendChild(renderer.domElement),camera.position.z=250;const light=new THREE.AmbientLight(16777215,.4);scene.add(light);const plight=new THREE.PointLight(0x00d4ff,1,500);plight.position.set(100,100,100),scene.add(plight);let particles=[],geom,mat,mesh,gravity=.5,rot={x:0,y:0};function init(e){mesh&&scene.remove(mesh),particles=[],geom=new THREE.BufferGeometry;const t=new Float32Array(3*e),r=new Float32Array(3*e);for(let i=0;i<e;i++){const a=2*Math.random()*Math.PI,o=150*Math.random(),s=50*(Math.random()-.5);t[3*i]=Math.cos(a)*o,t[3*i+1]=s,t[3*i+2]=Math.sin(a)*o;const c=new THREE.Color;c.setHSL(i/e,1,.6),r[3*i]=c.r,r[3*i+1]=c.g,r[3*i+2]=c.b,particles.push({pos:[t[3*i],t[3*i+1],t[3*i+2]],vel:{x:.5*Math.random()-.25,y:.5*Math.random()-.25,z:.5*Math.random()-.25}})}geom.setAttribute("position",new THREE.BufferAttribute(t,3)),geom.setAttribute("color",new THREE.BufferAttribute(r,3)),mat=new THREE.PointsMaterial({size:2,vertexColors:!0,transparent:!0,opacity:.8}),mesh=new THREE.Points(geom,mat),scene.add(mesh),document.getElementById("pDisplay").textContent=e}function update(){const e=geom.attributes.position.array;for(let t=0;t<particles.length;t++){const r=particles[t],i=Math.sqrt(r.pos[0]**2+r.pos[1]**2+r.pos[2]**2);i>0&&(r.vel.x-=r.pos[0]/i*gravity*.001,r.vel.y-=r.pos[1]/i*gravity*.001,r.vel.z-=r.pos[2]/i*gravity*.001),r.pos[0]+=r.vel.x,r.pos[1]+=r.vel.y,r.pos[2]+=r.vel.z,e[3*t]=r.pos[0],e[3*t+1]=r.pos[1],e[3*t+2]=r.pos[2]}geom.attributes.position.needsUpdate=!0}let drag=!1,prevMouse={x:0,y:0};document.addEventListener("mousedown",()=>{drag=!0}),document.addEventListener("mouseup",()=>{drag=!1}),document.addEventListener("mousemove",e=>{drag&&(rot.x+=.005*(e.clientY-prevMouse.y),rot.y+=.005*(e.clientX-prevMouse.x)),prevMouse={x:e.clientX,y:e.clientY}}),document.addEventListener("wheel",e=>{e.preventDefault(),camera.position.z+=.2*e.deltaY,camera.position.z=Math.max(50,Math.min(500,camera.position.z))}),document.getElementById("particles").addEventListener("change",e=>{init(parseInt(e.target.value)),document.getElementById("pCount").textContent=e.target.value}),document.getElementById("gravity").addEventListener("input",e=>{gravity=parseFloat(e.target.value),document.getElementById("gVal").textContent=gravity.toFixed(1)}),document.getElementById("reset").addEventListener("click",()=>{init(parseInt(document.getElementById("particles").value)),rot={x:0,y:0}});let lastTime=Date.now(),frameCount=0;function animate(){requestAnimationFrame(animate),update(),mesh&&(mesh.rotation.x+=rot.x,mesh.rotation.y+=rot.y,mesh.rotation.z+=.0002,rot.x*=.98,rot.y*=.98),renderer.render(scene,camera),frameCount++;const e=Date.now();e>=lastTime+1e3&&(document.getElementById("fps").textContent=frameCount,frameCount=0,lastTime=e)}init(3e3),animate(),window.addEventListener("resize",()=>{camera.aspect=window.innerWidth/window.innerHeight,camera.updateProjectionMatrix(),renderer.setSize(window.innerWidth,window.innerHeight)});</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Particle Galaxy 3D - Universe Explorer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #0a0e27 0%, #16213e 100%);
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+    }
+    canvas { display: block; }
+    .galaxy-info {
+      position: fixed;
+      top: 20px;
+      center: 50%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10, 14, 39, 0.95);
+      border: 2px solid #00d4ff;
+      padding: 15px 30px;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 200;
+      font-size: 18px;
+      font-weight: bold;
+      backdrop-filter: blur(10px);
+    }
+    .galaxy-name {
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+    .galaxy-desc {
+      font-size: 12px;
+      color: #b0b0ff;
+    }
+    #controls {
+      position: fixed;
+      top: 120px;
+      left: 20px;
+      background: rgba(10, 14, 39, 0.95);
+      border: 1px solid #00d4ff;
+      padding: 20px;
+      border-radius: 10px;
+      z-index: 100;
+      font-size: 13px;
+      backdrop-filter: blur(10px);
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    #controls h3 { color: #00d4ff; margin-bottom: 10px; }
+    .galaxy-selector {
+      margin-bottom: 15px;
+    }
+    .galaxy-selector label { display: block; margin-bottom: 8px; color: #7c3aed; font-weight: bold; }
+    .galaxy-btn {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: 1px solid #00d4ff;
+      background: rgba(0, 212, 255, 0.1);
+      color: #fff;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s;
+    }
+    .galaxy-btn:hover { background: linear-gradient(135deg, #00d4ff, #7c3aed); }
+    .galaxy-btn.active { background: linear-gradient(135deg, #00d4ff, #7c3aed); box-shadow: 0 0 15px rgba(0, 212, 255, 0.5); }
+    input[type="range"], button {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #00d4ff;
+      background: rgba(0, 212, 255, 0.1);
+      color: #fff;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    button { background: linear-gradient(135deg, #00d4ff, #7c3aed); border: none; font-weight: bold; }
+    button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3); }
+    #stats {
+      position: fixed;
+      top: 120px;
+      right: 20px;
+      background: rgba(10, 14, 39, 0.95);
+      border: 1px solid #7c3aed;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-family: monospace;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .stat { margin: 5px 0; color: #7c3aed; }
+    .stat-val { color: #00d4ff; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="galaxy-info">
+    <div class="galaxy-name" id="galaxyName">Milky Way</div>
+    <div class="galaxy-desc" id="galaxyDesc">Our Home Galaxy - 100-200 Billion Stars</div>
+  </div>
+
+  <div id="controls">
+    <h3>Select Galaxy</h3>
+    <div class="galaxy-selector">
+      <button class="galaxy-btn active" data-galaxy="milky-way" onclick="switchGalaxy('milky-way')">Milky Way</button>
+      <button class="galaxy-btn" data-galaxy="andromeda" onclick="switchGalaxy('andromeda')">Andromeda</button>
+      <button class="galaxy-btn" data-galaxy="triangulum" onclick="switchGalaxy('triangulum')">Triangulum</button>
+      <button class="galaxy-btn" data-galaxy="sombrero" onclick="switchGalaxy('sombrero')">Sombrero</button>
+      <button class="galaxy-btn" data-galaxy="whirlpool" onclick="switchGalaxy('whirlpool')">Whirlpool</button>
+    </div>
+    
+    <div style="margin-top: 15px; border-top: 1px solid #00d4ff; padding-top: 15px;">
+      <label>Particles: <span id="pCount">3000</span></label>
+      <input type="range" id="particles" min="500" max="10000" value="3000" step="500" onchange="updateParticles()">
+      
+      <label style="margin-top: 10px; display: block;">Gravity: <span id="gVal">0.5</span></label>
+      <input type="range" id="gravity" min="0" max="2" value="0.5" step="0.1" onchange="updateGravity()">
+      
+      <button id="reset" style="margin-top: 10px;" onclick="resetGalaxy()">Reset Galaxy</button>
+    </div>
+  </div>
+
+  <div id="stats">
+    <div class="stat">FPS: <span class="stat-val" id="fps">60</span></div>
+    <div class="stat">Particles: <span class="stat-val" id="particles-display">3000</span></div>
+    <div class="stat">Gravity: <span class="stat-val" id="gravity-display">0.5</span></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const galaxies = {
+      'milky-way': { name: 'Milky Way', desc: 'Our Home Galaxy - 100-200 Billion Stars', color: '#FFD700' },
+      'andromeda': { name: 'Andromeda Galaxy', desc: 'Nearest Major Galaxy - 1 Trillion Stars', color: '#00D4FF' },
+      'triangulum': { name: 'Triangulum Galaxy', desc: 'Third Largest Local Group - 40 Billion Stars', color: '#FF6EC7' },
+      'sombrero': { name: 'Sombrero Galaxy', desc: 'Famous for Dust Lane - 100 Billion Stars', color: '#FF8C00' },
+      'whirlpool': { name: 'Whirlpool Galaxy', desc: 'Spiral Beauty - 160 Billion Stars', color: '#00FF88' }
+    };
+    
+    let scene, camera, renderer, particles = [], currentGalaxy = 'milky-way';
+    let gravity = 0.5, geom, mat, mesh;
+
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x0a0e27);
+      document.body.appendChild(renderer.domElement);
+      camera.position.z = 250;
+      const light = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(light);
+      const plight = new THREE.PointLight(0x00d4ff, 1, 500);
+      plight.position.set(100, 100, 100);
+      scene.add(plight);
+      createGalaxy(3000);
+      animate();
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    function createGalaxy(count) {
+      if (mesh) scene.remove(mesh);
+      particles = [];
+      geom = new THREE.BufferGeometry();
+      const pos = new Float32Array(count * 3), col = new Float32Array(count * 3);
+      const galaxyColor = galaxies[currentGalaxy].color;
+      const baseRGB = new THREE.Color(galaxyColor);
+      
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2, dist = Math.random() * 150, h = (Math.random() - 0.5) * 100;
+        pos[i * 3] = Math.cos(angle) * dist;
+        pos[i * 3 + 1] = h;
+        pos[i * 3 + 2] = Math.sin(angle) * dist;
+        const c = new THREE.Color().setHSL((i / count + Math.random() * 0.3) % 1, 0.8, 0.6);
+        col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+        particles.push({ pos: [pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]], vel: { x: (Math.random() - 0.5) * 0.5, y: (Math.random() - 0.5) * 0.5, z: (Math.random() - 0.5) * 0.5 } });
+      }
+      geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geom.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      mat = new THREE.PointsMaterial({ size: 2, vertexColors: true, transparent: true, opacity: 0.8 });
+      mesh = new THREE.Points(geom, mat);
+      scene.add(mesh);
+      document.getElementById('particles-display').textContent = count;
+    }
+
+    function updatePhysics() {
+      const pos = geom.attributes.position.array;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i], dist = Math.sqrt(p.pos[0]**2 + p.pos[1]**2 + p.pos[2]**2);
+        if (dist > 0) {
+          p.vel.x -= (p.pos[0] / dist) * gravity * 0.001;
+          p.vel.y -= (p.pos[1] / dist) * gravity * 0.001;
+          p.vel.z -= (p.pos[2] / dist) * gravity * 0.001;
+        }
+        p.pos[0] += p.vel.x; p.pos[1] += p.vel.y; p.pos[2] += p.vel.z;
+        pos[i * 3] = p.pos[0]; pos[i * 3 + 1] = p.pos[1]; pos[i * 3 + 2] = p.pos[2];
+      }
+      geom.attributes.position.needsUpdate = true;
+    }
+
+    let lastTime = Date.now(), frameCount = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      updatePhysics();
+      if (mesh) mesh.rotation.z += 0.0002;
+      renderer.render(scene, camera);
+      frameCount++;
+      const now = Date.now();
+      if (now >= lastTime + 1000) {
+        document.getElementById('fps').textContent = frameCount;
+        frameCount = 0; lastTime = now;
+      }
+    }
+
+    function switchGalaxy(g) {
+      currentGalaxy = g;
+      document.querySelectorAll('.galaxy-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`[data-galaxy="${g}"]`).classList.add('active');
+      const galaxy = galaxies[g];
+      document.getElementById('galaxyName').textContent = galaxy.name;
+      document.getElementById('galaxyDesc').textContent = galaxy.desc;
+      createGalaxy(parseInt(document.getElementById('particles').value));
+    }
+
+    function updateParticles() { createGalaxy(parseInt(document.getElementById('particles').value)); document.getElementById('pCount').textContent = document.getElementById('particles').value; }
+    function updateGravity() { gravity = parseFloat(document.getElementById('gravity').value); document.getElementById('gVal').textContent = gravity.toFixed(1); document.getElementById('gravity-display').textContent = gravity.toFixed(1); }
+    function resetGalaxy() { createGalaxy(parseInt(document.getElementById('particles').value)); }
+
+    init();
+  </script>
+</body>
+</html>
